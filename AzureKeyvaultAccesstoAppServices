@@ -1,0 +1,8 @@
+# Allow appservices access to keyvault using az-cli
+# https://docs.microsoft.com/en-us/azure/key-vault/general/tutorial-net-create-vault-azure-web-app?tryIt=true&source=docs#code-try-13
+az login
+az account set --subscription "sub-staging"
+
+az webapp identity assign --name "app-staging-westus-authservice" --resource-group "PCMS-Staging"
+
+cat C:\Users\david.ruffin\Downloads\pcms-app-service.txt | foreach {az webapp identity assign --name $_ --resource-group "PCMS-Staging"} 

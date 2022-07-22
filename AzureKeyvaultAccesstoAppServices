@@ -1,5 +1,6 @@
 # Allow appservices access to keyvault using az-cli
 # https://docs.microsoft.com/en-us/azure/key-vault/general/tutorial-net-create-vault-azure-web-app?tryIt=true&source=docs#code-try-13
+# https://docs.microsoft.com/en-us/azure/active-directory/managed-identities-azure-resources/how-to-assign-app-role-managed-identity-powershell?tabs=azurepowershell
 az login
 az account set --subscription "sub-staging"
 

@@ -34,3 +34,18 @@ pip3 install "ansible==2.9.17"
 
 # Install Ansible azure_rm module for interacting with Azure.
 pip3 install ansible[azure]
+
+# make azure dir
+mkdir ~/.azure
+
+# Create Ansible credentials file.
+sh -c 'echo -e "[default]
+subscription_id=b0b9cafa-3a92-4797-b19e-eac855d82ba6
+client_id=bfccd8cc-a57a-41ad-80da-b89b3cffd776
+secret=t7o8Q~tRlcvrESBt56TVe5VaDGCS8eyzKONTYcdc
+tenant=5a5b6888-acb2-4d8b-baa6-97a5aa036219" > ~/.azure/credentials'
+
+az-login
+
+#Ansible 2.9 with azure_rm module
+ansible localhost -m azure_rm_resourcegroup -a "name=ansible-test location=eastus"

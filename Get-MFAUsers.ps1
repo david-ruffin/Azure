@@ -1,5 +1,6 @@
-# Get current list of users that dont have MFA enabled and store in variable
-$users = Import-Csv "c:\scripts\MFAStatus-Sep-05-2022.csv"
+ # Get current list of users that dont have MFA enabled and store in variable
+$users = C:\Scripts\Get-MgMFAStatus.ps1 -withOutMFAOnly
+#$users = Import-Csv "c:\scripts\MFAStatus-Sep-05-2022.csv"
 # Get list of service account users that need to be removed from the final list
 $service_accounts = (Get-ADUser -Filter * -SearchBase 'DC=amtwoundcare,DC=com' | 
     Where-Object { $_.DistinguishedName -like '*OU=Service Accounts,*' }).UserPrincipalName | sort
@@ -18,4 +19,6 @@ foreach ($i in 0..$service_accounts.count)
             $demoArrayList.Remove($delete)
         }
     
-    } 
+    }
+
+$demoArrayList | ogv 

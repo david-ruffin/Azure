@@ -1,7 +1,7 @@
- # Terrafomer to scan all resource groups of a subscription and create files based on suppored resources
- #### PreReqs ####
- # Ensure Terraform and Terraformer are installed
- 
+# Terrafomer to scan all resource groups of a subscription and create files based on suppored resources
+#### PreReqs ####
+# Ensure Terraform and Terraformer are installed
+# https://github.com/GoogleCloudPlatform/terraformer/blob/master/docs/azure.md
  
 # Using Service Principal with Client Secret
 export ARM_SUBSCRIPTION_ID=[SUBSCRIPTION_ID]

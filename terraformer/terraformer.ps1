@@ -9,4 +9,9 @@ export ARM_CLIENT_ID=[CLIENT_ID]
 export ARM_TENANT_ID=[TENANT_ID]
 export ARM_CLIENT_SECRET=[CLIENT_SECRET]
 
-(get-content .\AzureObjects.txt) | ForEach-Object {terraformer import azure -r $_} 
+# Connect to azure ad
+Connect-azaccount
+# Select subscriptions (if multiple subscriptions)
+Select-azcontext -subscription "sub-staging"
+
+(get-content .\supported-azure-objects.txt) | ForEach-Object {terraformer import azure -r $_} 

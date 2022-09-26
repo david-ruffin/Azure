@@ -12,6 +12,6 @@ export ARM_CLIENT_SECRET=[CLIENT_SECRET]
 # Connect to azure ad
 Connect-azaccount
 # Select subscriptions (if multiple subscriptions)
-Select-azcontext -subscription "sub-staging"
+Set-AzContext -Subscription "sub-staging" 
 
 (get-content .\supported-azure-objects.txt) | ForEach-Object {terraformer import azure -r $_} 

@@ -13,5 +13,7 @@ export ARM_CLIENT_SECRET=[CLIENT_SECRET]
 Connect-azaccount
 # Select subscriptions (if multiple subscriptions)
 Set-AzContext -Subscription "sub-staging" 
+# Initialize Terraform
+terraform init
 
 (get-content .\supported-azure-objects.txt) | ForEach-Object {terraformer import azure -r $_} 

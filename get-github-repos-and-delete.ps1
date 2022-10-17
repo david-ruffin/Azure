@@ -5,9 +5,6 @@ $token_string = ("Bearer " + $token)
 
 $headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
 $headers.Add("Authorization", $token_string) 
- 
-
-$headers.Add("Authorization", "Bearer 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")
 
 $response = Invoke-RestMethod 'https://api.github.com/orgs/405network-com/repos' -Method 'GET' -Headers $headers -TimeoutSec 999999
 $response | ConvertTo-Json

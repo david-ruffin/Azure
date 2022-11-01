@@ -1,4 +1,8 @@
- $results = @()
+$creds = (Get-Credential)
+Connect-VIServer "<vmware server> -Credential $creds
+$vms = get-vm | Where-Object {$_.Powerstate -eq "PoweredOn" -and $_.GuestID -like "win*"}
+ 
+$results = @()
 Write-Output "Below are the vms that will install app"
 $vms
 $URL = "https://samgmtzabbixinstaller.blob.core.windows.net/zabbix/zabbix_agent2-6.2.3-windows-amd64-openssl.msi"
@@ -65,7 +69,7 @@ $vms | ForEach-Object {
             status   = ($update)
         }
         $results += $sarr
-    }
-        
+    }        
 }
 $results | Select-Object hostname, status 
+Disconnect-VIServer -Force -Confirm:$false 

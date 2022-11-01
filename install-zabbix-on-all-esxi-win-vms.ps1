@@ -14,6 +14,7 @@ $vms | foreach {
         # Download Zabbix agent to local machine
         $URL = "https://samgmtzabbixinstaller.blob.core.windows.net/zabbix/zabbix_agent2-6.2.3-windows-amd64-openssl.msi"
         $Path = "$env:TEMP\zabbix_agent2-6.2.3-windows-amd64-openssl.msi"
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         Invoke-WebRequest -URI $URL -OutFile $Path
         $HOSTMETADATA = "windows_datacenter"
 

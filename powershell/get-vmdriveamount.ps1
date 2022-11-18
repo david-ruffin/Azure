@@ -1,7 +1,7 @@
 # This will log into Azure, and check vm "VM-LaserficheApp-Prod-westus-01" for all its drives. If any drive is over 80% full, it will send results via email
 # Login to azure
-$Username = 'rundeck_svc@amtwoundcare.com'
-$Password = ConvertTo-SecureString 'tdfNJxg3NT6?' -AsPlainText -Force
+$Username = '<username>'
+$Password = ConvertTo-SecureString '<password>' -AsPlainText -Force
 $Credentials = New-Object System.Management.Automation.PSCredential $Username, $Password
 Connect-AzAccount -Credential $Credentials | Out-Null
 # Select subscription

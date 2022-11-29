@@ -11,3 +11,6 @@ Get-VMHost -Name '192.168.30.5' | set-vmhost -State Maintenance
 # Shutdown the host
 Stop-VMhost -VMhost '192.168.30.5' -Confirm:$false
 Disconnect-viserver -Confirm:$false -force
+
+#Shut down qnap
+ssh admin@192.168.30.36 poweroff

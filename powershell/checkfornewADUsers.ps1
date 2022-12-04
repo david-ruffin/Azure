@@ -14,13 +14,15 @@ $file = 'c:\users.json'
 $ADSearchBase = 'OU=Employees,DC=AMTWOUNDCARE,DC=com'
 $DCServerName = 'amtdc5.amtwoundcare.com'
 
-# If the file does not exist, create it.
+# If the file does not exist, create it. This will check all users in AD and titlecase all names
+
 if (-not(Test-Path -Path $file -PathType Leaf)) {
     try {
         (Invoke-Command -ComputerName $DCServerName -ScriptBlock {
             Get-ADUser -SearchBase $using:ADSearchBase -Filter { Enabled -eq $true } | `
                 Where-Object { $_.DistinguishedName -notmatch "admin" } | Select-Object SamAccountName
-        } -Credential $creds | Sort-Object -Property SamAccountName).SamAccountName | ConvertTo-Json | Out-file $file -Force
+        } -Credential $creds | Sort-Object -Property SamAccountName).SamAccountName | `
+        ForEach-Object {(Get-Culture).TextInfo.ToTitleCase($_)} | ConvertTo-Json | Out-file $file -Force
 
         Write-Host "The file [$file] has been created."
     }
@@ -41,7 +43,8 @@ else {
         (Invoke-Command -ComputerName $DCServerName -ScriptBlock {
             Get-ADUser -SearchBase $using:ADSearchBase -Filter { Enabled -eq $true } | `
                 Where-Object { $_.DistinguishedName -notmatch "admin" } | Select-Object SamAccountName
-        } -Credential $creds | Sort-Object -Property SamAccountName).SamAccountName | ConvertTo-Json | Out-file $file -Force
+        } -Credential $creds | Sort-Object -Property SamAccountName).SamAccountName | `
+        ForEach-Object {(Get-Culture).TextInfo.ToTitleCase($_)} | ConvertTo-Json | Out-file $file -Force
         Write-Host "There have been new users added to Active Directory and this script will create new file with updated users"
     }
     else {

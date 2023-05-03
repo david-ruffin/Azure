@@ -1,11 +1,15 @@
-connect-azaccount 
+$Username = "your_username_here"
+$Password = "your_password_here" | ConvertTo-SecureString -AsPlainText -Force
+$Credential = New-Object System.Management.Automation.PSCredential($Username, $Password)
+Connect-AzAccount -Credential $Credential #-Tenant "your_tenant_id_here" -ServicePrincipal
+
 # Get all avaialble subscriptions
 $subs = (get-azsubscription).Name
 $results = $null
 $script = "C:\scripts\check-openssl-installed.ps1"
 $subs | ForEach-Object {
-    set-azcontext -subscription $_ 
-    $azvms = get-azvm | where-object { $_.StorageProfile.OsDisk.OsType -eq "Windows" } 
+    set-azcontext -Subscription $_ 
+    $azvms = Get-azvm | where-object { $_.StorageProfile.OsDisk.OsType -eq "Windows" } 
     $azvms | ForEach-Object { $status = Invoke-AzVmRunCommand `
             -ResourceGroupName $_.ResourceGroupName `
             -VMName $_.Name `
@@ -15,4 +19,6 @@ $subs | ForEach-Object {
         if ($null -ne $status.Value.message) { $results += $status.Value.message }
     }
 }
+Disconnect-AzAccount -Scope Process -Force
+
 $results

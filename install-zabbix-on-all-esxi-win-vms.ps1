@@ -1,5 +1,7 @@
-$creds = (Get-Credential)
-Connect-VIServer amtvc1.amtwoundcare.com -Credential $creds
+$Username = "your_username_here"
+$Password = "your_password_here" | ConvertTo-SecureString -AsPlainText -Force
+$Credential = New-Object System.Management.Automation.PSCredential($Username, $Password)
+Connect-VIServer amtvc1.amtwoundcare.com -Credential $Credential
 # Get Windows vms that are powered on and store in var
 $vms = get-vm | Where-Object {$_.Powerstate -eq "PoweredOn" -and $_.GuestID -like "win*"}
 

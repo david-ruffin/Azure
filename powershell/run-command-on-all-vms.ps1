@@ -2,8 +2,8 @@
 $Username = 'user'
 $Password = ConvertTo-SecureString 'password' -AsPlainText -Force
 $vmcreds = New-Object System.Management.Automation.PSCredential $Username, $Password
- 
 $viservers = '<vmware-server1>', '<vmware-server2>'
+$csvfile = c:\vms.csv
  
 # Log into vmware
 $viservers | ForEach-Object { connect-viserver -server $_ -credential $vmcreds }
@@ -40,3 +40,6 @@ foreach ($vmName in $vmList) {
 }
 # Display the output object
 $results 
+$results | Export-Csv -Path $csvfile -NoTypeInformation -Append -Force
+
+Disconnect-VIServer -Server * -Confirm:$false

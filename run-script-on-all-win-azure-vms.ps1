@@ -1,6 +1,6 @@
 $Username = "your_username_here"
-$Password = "your_password_here" | ConvertTo-SecureString -AsPlainText -Force
-$Credential = New-Object System.Management.Automation.PSCredential($Username, $Password)
+$Password = ConvertTo-SecureString 'password' -AsPlainText -Force  
+$Credentials = New-Object System.Management.Automation.PSCredential $Username, $Password  
 Connect-AzAccount -Credential $Credential #-Tenant "your_tenant_id_here" -ServicePrincipal
 
 # Get all avaialble subscriptions

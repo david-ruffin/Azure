@@ -1,7 +1,9 @@
-$Username = "your_username_here"
-$Password = ConvertTo-SecureString 'password' -AsPlainText -Force  
-$Credentials = New-Object System.Management.Automation.PSCredential $Username, $Password  
-Connect-AzAccount -Credential $Credential #-Tenant "your_tenant_id_here" -ServicePrincipal
+ # Connect to your Azure account
+$Username = "rundeck_svc@amtwoundcare.com"
+$Password = ConvertTo-SecureString 'tdfNJxg3NT6?' -AsPlainText -Force  
+$Credential = New-Object System.Management.Automation.PSCredential $Username, $Password  
+Connect-AzAccount -Credential $Credential #-Tenant "your_tenant_id_here" -ServicePrincipal 
+
 
 # Get all avaialble subscriptions
 $subs = (get-azsubscription).Name

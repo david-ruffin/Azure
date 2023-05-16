@@ -1,6 +1,6 @@
  # Connect to your Azure account
-$Username = "rundeck_svc@amtwoundcare.com"
-$Password = ConvertTo-SecureString 'tdfNJxg3NT6?' -AsPlainText -Force  
+$Username = "user"
+$Password = ConvertTo-SecureString 'pass' -AsPlainText -Force  
 $Credential = New-Object System.Management.Automation.PSCredential $Username, $Password  
 Connect-AzAccount -Credential $Credential #-Tenant "your_tenant_id_here" -ServicePrincipal 
 

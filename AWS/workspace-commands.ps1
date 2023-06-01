@@ -7,6 +7,7 @@ $workspaces = Get-WKSWorkspace -Region us-west-2 -workspaceid "ws-1", "ws-2"
 # Set workspaces to ALWAYS_ON
 $workspaces | ForEach-Object {Edit-WKSWorkspaceProperty -WorkspaceId $_.WorkspaceId -Region $Region -WorkspaceProperties_RunningMode ALWAYS_ON}
 
+
 # Display results of workspace with Running Mode
 $workspaces | foreach {
     $runningState = (Get-WKSWorkspace -Region us-west-2 -WorkSpaceId $_.WorkspaceId).WorkspaceProperties.RunningMode

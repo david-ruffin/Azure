@@ -1,4 +1,12 @@
-# Add perms to an AD user that has multiple sub-domains
+# Add perms to an AD user that has multiple sub-domains. This should enable the following permissions:
+
+1. Check if user exists in sub domain
+2. If / when user is located, get all users info, group membership, etc 
+3. eset password
+4. Remove all group membership
+5. Move to terminated OU
+6. Disable user account
+
 #Check if user exists in sub domain: This requires List Contents permission on the domain or OU. The dsacls command for this is: dsacls $_ /I:S /G "ACME\svc_account:LC;;user"
 
 #If / when user is located, get all users info, group membership, etc: This requires Read All Properties permission on the User object. The dsacls command for this is: dsacls $_ /I:S /G "ACME\svc_account:RP;;user"

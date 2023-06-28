@@ -2,7 +2,7 @@
 
 1. Check if user exists in sub domain
 2. If / when user is located, get all users info, group membership, etc 
-3. eset password
+3. Reset password
 4. Remove all group membership
 5. Move to terminated OU
 6. Disable user account

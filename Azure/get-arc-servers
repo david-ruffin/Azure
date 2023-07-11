@@ -1,0 +1,2 @@
+# List all azure arc servers that are powered on with their dns hostname
+get-azconnectedMachine | where {$_.status -eq "Connected"} | select Name, DisplayName

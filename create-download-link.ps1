@@ -5,6 +5,7 @@ $ResourceGroupName = "resourcegroup"
 $StorageAccountName = "storage3545awdawdawd345345345345"
 $ContainerName = "yourcontainername"
 $LocalFilePath = "C:\OneDriveSetup.exe"
+$fileName = Split-Path -Path $LocalFilePath -Leaf
 
 
 
@@ -29,6 +30,6 @@ $publicUrl = "https://$($storageAccount.StorageAccountName).blob.core.windows.ne
 # Display the public URL
 Write-Host "The public URL for the file is: $publicUrl"
 
-$localDownloadPath = "$env:USERPROFILE\Downloads\OneDriveSetup.exe"
+$localDownloadPath = "$env:USERPROFILE\Downloads\$fileName"
 
 Invoke-WebRequest -Uri $publicUrl -OutFile $localDownloadPath  

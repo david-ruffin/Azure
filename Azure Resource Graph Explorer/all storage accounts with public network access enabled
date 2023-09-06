@@ -1,0 +1,5 @@
+Resources
+| where type == 'microsoft.storage/storageaccounts'
+| extend publicAccess = properties.networkAcls.defaultAction
+| where publicAccess == 'Allow'
+| project name, resourceGroup, publicAccess

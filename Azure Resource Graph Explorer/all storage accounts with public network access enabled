@@ -3,3 +3,6 @@ Resources
 | extend publicAccess = properties.networkAcls.defaultAction
 | where publicAccess == 'Allow'
 | project name, resourceGroup, publicAccess
+
+# Powershell (for 1 sub)
+# Get-AzStorageAccount | Where-Object {$_.NetworkRuleSet.DefaultAction -eq 'Allow'} | Select-Object StorageAccountName, ResourceGroupName, NetworkRuleSet

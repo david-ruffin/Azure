@@ -59,7 +59,7 @@ $newVnet = New-AzVirtualNetwork -ResourceGroupName $resourceGroupName -Name $vne
 
 # Peer Hub to Spoke.
 Set-AzContext -Subscription $hubSubscriptionName
-Add-AzVirtualNetworkPeering -Name 'LinkHubToSpoke' -VirtualNetwork $hubVnet -RemoteVirtualNetworkId $newVnet.Id
+Add-AzVirtualNetworkPeering -Name (($spokeSubscriptionName -replace " ", "_").ToLower() +"_network") -VirtualNetwork $hubVnet -RemoteVirtualNetworkId $newVnet.Id
 
 # Peer Spoke to Hub.
 Set-AzContext -Subscription $spokeSubscriptionName

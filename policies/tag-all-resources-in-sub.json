@@ -1,0 +1,39 @@
+{
+  "mode": "All",
+  "policyRule": {
+    "if": {
+      "field": "tags['Owner']",
+      "exists": "false"
+    },
+    "then": {
+      "effect": "deployIfNotExists",
+      "details": {
+        "roleDefinitionIds": [
+          "/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c"  // Owner role definition ID
+        ],
+        "type": "Microsoft.Resources/subscriptions",
+        "name": "[subscription().subscriptionId]",
+        "existenceCondition": {
+          "field": "tags['Owner']",
+          "exists": "true"
+        },
+        "deployment": {
+          "properties": {
+            "parameters": {
+              "tagName": {
+                "value": "Owner"
+              },
+              "tagValue": {
+                "value": "YourValue"  // Replace with the desired value for the "Owner" tag
+              }
+            },
+            "template": {
+              "resources": [],
+              "outputs": {}
+            }
+          }
+        }
+      }
+    }
+  }
+}

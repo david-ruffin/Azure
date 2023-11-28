@@ -11,3 +11,12 @@ $MsalToken = Get-MsalToken -TenantId $TenantId -ClientId $AppId -ClientSecret ($
  
 #Connect to Graph using access token
 Connect-Graph -AccessToken $MsalToken.AccessToken
+
+#Log into Azure with env vars
+$clientId = $env:AZURE_CLIENT_ID
+$clientSecret = $env:AZURE_CLIENT_SECRET
+$tenantId = $env:AZURE_TENANT_ID
+
+$pscredential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList $clientId, (ConvertTo-SecureString $clientSecret -AsPlainText -Force)
+
+Connect-AzAccount -ServicePrincipal -Credential $pscredential -TenantId $tenantId

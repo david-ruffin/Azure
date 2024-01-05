@@ -56,5 +56,88 @@ function Get-AzureCostInfo {
         [string]$EndDate
     )
 
-    # Script implementation remains the same as previously provided
+    Begin {
+        # Acquire Token
+        $tokenBody = @{
+            'grant_type'    = 'client_credentials'
+            'resource'      = 'https://management.azure.com/'
+            'client_id'     = $ClientId
+            'client_secret' = $ClientSecret
+        }
+
+        try {
+            $tokenResponse = Invoke-RestMethod -Method Post -Uri "https://login.microsoftonline.com/$TenantId/oauth2/token" -Body $tokenBody
+        }
+        catch {
+            Write-Error "Failed to acquire token: $_"
+            return
+        }
+        $accessToken = $tokenResponse.access_token
+    }
+
+    Process {
+        # API endpoint and request body
+        $apiEndpoint = "https://management.azure.com/subscriptions/$SubscriptionId/providers/Microsoft.CostManagement/query?api-version=2023-11-01"
+        $requestBody = @{
+            "type" = "ActualCost"
+            "timeframe" = "Custom"
+            "timePeriod" = @{
+                "from" = $StartDate
+                "to" = $EndDate
+            }
+            "dataset" = @{
+                "granularity" = "None"
+                "aggregation" = @{
+                    "totalCost" = @{
+                        "name" = "PreTaxCost"
+                        "function" = "Sum"
+                    }
+                }
+                "grouping" = @(
+                    @{
+                        "type" = "Dimension"
+                        "name" = "SubscriptionName"
+                    }
+                )
+            }
+        }
+
+        # Define headers for API request
+        $headers = @{
+            'Content-Type' = 'application/json'
+            'Authorization' = "Bearer $accessToken"
+        }
+
+        try {
+            $jsonBody = $requestBody | ConvertTo-Json -Depth 10
+            $response = Invoke-RestMethod -Uri $apiEndpoint -Headers $headers -Method Post -Body $jsonBody
+        }
+        catch {
+            Write-Error "Failed to invoke REST method: $_"
+            return
+        }
+
+        # Parsing and handling the response
+        try {
+            $parsedResponse = if ($response -is [System.String]) {
+                $response | ConvertFrom-Json
+            } else {
+                $response
+            }
+
+            $costAmount = [math]::Truncate([double]$parsedResponse.properties.rows[0][0])
+            $subscriptionName = $parsedResponse.properties.rows[0][1]
+
+            # Creating a custom object
+            $costInfo = New-Object PSObject -Property @{
+                SubscriptionName = $subscriptionName
+                CostAmount = $costAmount
+            }
+
+            return $costInfo
+        }
+        catch {
+            Write-Error "Failed to parse response: $_"
+        }
+    }
 }

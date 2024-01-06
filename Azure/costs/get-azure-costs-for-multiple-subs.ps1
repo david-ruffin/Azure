@@ -1,7 +1,7 @@
 # Declare variables and Authentication
-$client_id = "xxx"
-$client_secret = "xxx"
-$tenant_id = "xxx"
+$client_id = "ecec4e2b-27dd-46e4-9652-3c2165ef08c7"
+$client_secret = "qv~8Q~KIqW3JxV.qL3QZAlRvwW.nJefv-TJe8bqU"
+$tenant_id = "4be064e5-ab93-4e44-b6cd-3907df0ba21c"
 
 # Get the names of the previous month and the month before that
 $previous_month = (Get-Date).AddMonths(-1).ToString("MMMM yyyy")
@@ -106,7 +106,12 @@ foreach ($subscription in $subscriptions) {
 }
 
 # Output the cost information for all subscriptions
-return $allCostInfo
+# return $allCostInfo
 
 # Disconnect from Azure to clean up the session
-Disconnect-AzAccount -Force
+Disconnect-AzAccount -Confirm:$false
+
+# Convert $allCostInfo to a JSON string        
+$jsonString = $allCostInfo | ConvertTo-Json -Depth 10
+
+return $jsonString

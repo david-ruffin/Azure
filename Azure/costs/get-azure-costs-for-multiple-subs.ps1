@@ -14,7 +14,7 @@ $SecureClientSecret = ConvertTo-SecureString $client_secret -AsPlainText -Force
 $PsCredential = New-Object System.Management.Automation.PSCredential($client_id, $SecureClientSecret)
 
 # Connect to Azure with the service principal credentials
-Connect-AzAccount -ServicePrincipal -Credential $PsCredential -Tenant $tenant_id 
+Connect-AzAccount -ServicePrincipal -Credential $PsCredential -Tenant $tenant_id -WarningAction SilentlyContinue | Out-Null
 
 # Calculate last month's start and end dates
 $lastMonth = (Get-Date).AddMonths(-1)

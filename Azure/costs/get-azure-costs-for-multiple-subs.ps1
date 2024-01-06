@@ -1,7 +1,7 @@
 # Declare variables and Authentication
-$client_id = "ecec4e2b-27dd-46e4-9652-3c2165ef08c7"
-$client_secret = "qv~8Q~KIqW3JxV.qL3QZAlRvwW.nJefv-TJe8bqU"
-$tenant_id = "4be064e5-ab93-4e44-b6cd-3907df0ba21c"
+$client_id = "xxx"
+$client_secret = "xxx"
+$tenant_id = "xxx"
 
 # Get the names of the previous month and the month before that
 $previous_month = (Get-Date).AddMonths(-1).ToString("MMMM yyyy")
@@ -36,8 +36,8 @@ $tokenBody = @{
 $tokenResponse = Invoke-RestMethod -Method Post -Uri "https://login.microsoftonline.com/$tenant_id/oauth2/token" -Body $tokenBody
 $accessToken = $tokenResponse.access_token
 
-# Retrieve all Azure subscriptions
-$subscriptions = Get-AzSubscription
+# Retrieve all Azure subscriptions that are enabled
+$subscriptions = Get-AzSubscription | Where-Object {$_.State -eq "Enabled"}
 
 # Initialize an array to store cost information for each subscription
 $allCostInfo = @()

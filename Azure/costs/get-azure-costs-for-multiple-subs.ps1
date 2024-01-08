@@ -44,24 +44,34 @@ $allCostInfo = @()
 
 # Function to get cost amount for a subscription
 function GetCostAmount($requestBody, $apiEndpoint, $headers) {
+    $maxRetries = 5
+    $retryCount = 0
+
     do {
         try {
-            Start-Sleep -Seconds 20  # Enforce wait time between API calls to avoid rate limits
+            Start-Sleep -Seconds 20
             $jsonBody = $requestBody | ConvertTo-Json -Depth 10
+            Write-Verbose "Sending request to $apiEndpoint"
             $response = Invoke-RestMethod -Uri $apiEndpoint -Headers $headers -Method Post -Body $jsonBody
             return [int][math]::Truncate([double]$response.properties.rows[0][0])
         }
         catch {
+            $retryCount++
             if ($_.Exception.Response.StatusCode -eq 429) {
                 $retryAfter = [int] $_.Exception.Response.Headers['Retry-After']
+                Write-Warning "Rate limit reached. Retrying after $retryAfter seconds"
                 Start-Sleep -Seconds $retryAfter
+            }
+            elseif ($retryCount -lt $maxRetries) {
+                Write-Warning "Failed to retrieve cost for subscription: $($subscription.Id). Retrying... ($retryCount/$maxRetries)"
+                Start-Sleep -Seconds 30
             }
             else {
                 Write-Warning "Failed to retrieve cost for subscription: $($subscription.Id). Error: $_"
                 return $null
             }
         }
-    } while ($true)
+    } while ($retryCount -lt $maxRetries)
 }
 
 # Function to calculate percentage change
@@ -136,7 +146,7 @@ foreach ($subscription in $subscriptions) {
 # return $allCostInfo
 
 # Disconnect from Azure to clean up the session
-Disconnect-AzAccount -Confirm:$false
+Disconnect-AzAccount -Confirm:$false | Out-Null
 
 # Convert $allCostInfo to a JSON string        
 $jsonString = $allCostInfo | ConvertTo-Json -Depth 10

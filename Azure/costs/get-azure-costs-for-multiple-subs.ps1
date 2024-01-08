@@ -73,6 +73,33 @@ function CalculatePercentageChange($oldValue, $newValue) {
     }
 }
 
+# Function to create request body
+function CreateRequestBody($fromDate, $toDate) {
+    @{
+        "type"       = "ActualCost"
+        "timeframe"  = "Custom"
+        "timePeriod" = @{
+            "from" = $fromDate.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+            "to"   = $toDate.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+        }
+        "dataset"    = @{
+            "granularity" = "None"
+            "aggregation" = @{
+                "totalCost" = @{
+                    "name"     = "PreTaxCost"
+                    "function" = "Sum"
+                }
+            }
+            "grouping"    = @(
+                @{
+                    "type" = "Dimension"
+                    "name" = "SubscriptionName"
+                }
+            )
+        }
+    }
+}
+
 # Process each subscription to gather cost information
 foreach ($subscription in $subscriptions) {
     $apiEndpoint = "https://management.azure.com/subscriptions/$($subscription.Id)/providers/Microsoft.CostManagement/query?api-version=2023-11-01"

@@ -37,7 +37,7 @@ $tokenResponse = Invoke-RestMethod -Method Post -Uri "https://login.microsoftonl
 $accessToken = $tokenResponse.access_token
 
 # Retrieve all Azure subscriptions that are enabled
-$subscriptions = Get-AzSubscription | Where-Object {$_.State -eq "Enabled"}
+$subscriptions = Get-AzSubscription | Where-Object {$_.State -eq "Enabled"} | Select-Object Name, Id, @{Name='Owner'; Expression={$_.Tags["owner"]}}
 
 # Initialize an array to store cost information for each subscription
 $allCostInfo = @()
@@ -133,8 +133,9 @@ foreach ($subscription in $subscriptions) {
     # Create an object to hold the subscription's cost information
     $costInfo = New-Object -TypeName PSObject -Property @{
         SubscriptionName = $subscription.Name
-        ("$previous_month Total Costs") = $costAmountLastMonth
-        ("$previous_2_months Total Costs") = $costAmountTwoMonthsAgo
+        Owner = $subscription.Owner
+        ($previous_month + "Costs") = $costAmountLastMonth
+        ($previous_2_months + "Costs") = $costAmountTwoMonthsAgo
         "Percentage Change" = [math]::Round($percentageChange, 2)
     }
 
@@ -143,7 +144,15 @@ foreach ($subscription in $subscriptions) {
 }
 
 # Output the cost information for all subscriptions
-# return $allCostInfo
+return $allCostInfo
+
+# Disconnect from Azure to clean up the session
+# Disconnect-AzAccount -Confirm:$false | Out-Null
+
+# Convert $allCostInfo to a JSON string        
+$jsonString = $allCostInfo | ConvertTo-Json -Depth 10
+
+return $jsonString
 
 # Disconnect from Azure to clean up the session
 Disconnect-AzAccount -Confirm:$false | Out-Null

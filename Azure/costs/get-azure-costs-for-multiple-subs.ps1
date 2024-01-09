@@ -134,11 +134,10 @@ foreach ($subscription in $subscriptions) {
     $costInfo = New-Object -TypeName PSObject -Property @{
         SubscriptionName = $subscription.Name
         Owner = $subscription.Owner
-        ($previous_month + "Costs") = $costAmountLastMonth
-        ($previous_2_months + "Costs") = $costAmountTwoMonthsAgo
+        ($previous_month + " Costs") = $costAmountLastMonth
+        ($previous_2_months + " Costs") = $costAmountTwoMonthsAgo
         "Percentage Change" = [math]::Round($percentageChange, 2)
     }
-
     # Add the cost information to the array
     $allCostInfo += $costInfo
 }
@@ -148,14 +147,6 @@ return $allCostInfo
 
 # Disconnect from Azure to clean up the session
 # Disconnect-AzAccount -Confirm:$false | Out-Null
-
-# Convert $allCostInfo to a JSON string        
-$jsonString = $allCostInfo | ConvertTo-Json -Depth 10
-
-return $jsonString
-
-# Disconnect from Azure to clean up the session
-Disconnect-AzAccount -Confirm:$false | Out-Null
 
 # Convert $allCostInfo to a JSON string        
 $jsonString = $allCostInfo | ConvertTo-Json -Depth 10

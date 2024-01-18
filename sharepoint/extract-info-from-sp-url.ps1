@@ -95,11 +95,23 @@ $headers = @{
     "Content-Type"  = "application/json"
 }
 
+
+
+#### needs refinement for folder_id ###
 # API Request to list items in the drive
 try {
     $apiUrl = "https://graph.microsoft.com/v1.0/drives/$driveId/root/children"
     $response = Invoke-RestMethod -Headers $headers -Uri $apiUrl
     $items = $response.value
+} catch {
+    Write-Error "Error retrieving items: $_"
+    exit
+}
+
+try {
+    $apiUrl = "https://graph.microsoft.com/v1.0/sites/" + $siteid + "/drives/" + $driveid + "/root:/General/Ticket Strategy/SFTP/Pricemaster/2023-24"
+    $response = Invoke-RestMethod -Headers $headers -Uri $apiUrl
+    $items = $response
 } catch {
     Write-Error "Error retrieving items: $_"
     exit

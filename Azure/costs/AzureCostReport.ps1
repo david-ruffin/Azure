@@ -232,9 +232,6 @@ foreach ($owner in $ownerCostDetails.Keys) {
     </html>
 "@
 
-    # Send the email
-    #Send-EmailMessage -From $from_email_address -To $to_email_address -Credential $Credential -HTML $htmlbody -Subject "Azure Subscription Costs as of $date" -Graph -DoNotSaveToSentItems -Verbose -ErrorAction SilentlyContinue
-    # Send Email
     $retryCount = 0
     $retryMax = 5
 

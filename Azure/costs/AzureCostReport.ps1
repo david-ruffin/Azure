@@ -42,17 +42,16 @@ Purpose/Change: Initial script development
 
 #>
 
-# Declare variables and Authentication
-$client_id = "xxx"
-$client_secret = "xxx"
-$tenant_id = "xxx"
-$from_email_address = "user1@contoso.com"
-$to_email_address = "user2@contoso.com"
-$cc_email_address = @("user3@contoso.com", "user4@contoso.com")
+# Install necessary modules and dependencies
+Install-Module MSAL.PS -Scope CurrentUser -Force | Out-Null
+Install-Module Mailozaurr -Force | Out-Null
+Install-Module PSWriteHTML -Force | Out-Null
+Import-Module -Name PSWriteHTML
 
 # Get the names of the previous month and the month before that
 $previous_month = (Get-Date).AddMonths(-1).ToString("MMMM yyyy")
 $previous_2_months = (Get-Date).AddMonths(-2).ToString("MMMM yyyy")
+$date = (Get-Date).ToString("MMMM dd, yyyy")
 
 # Convert the client secret to a SecureString for security
 $SecureClientSecret = ConvertTo-SecureString $client_secret -AsPlainText -Force
@@ -184,6 +183,7 @@ foreach ($subscription in $subscriptions) {
     $allCostInfo += $costInfo
 }
 
+# Organize cost information by owner
 $ownerCostDetails = @{}
 foreach ($info in $allCostInfo) {
     if ([string]::IsNullOrWhiteSpace($info.Owner)) {
@@ -196,56 +196,64 @@ foreach ($info in $allCostInfo) {
     $ownerCostDetails[$info.Owner] += $info
 }
 
-# Send an email for each owner with their subscription details
-Install-Module MSAL.PS -Scope CurrentUser -Force | Out-Null
-Install-Module Mailozaurr -Force | Out-Null
-Install-Module PSWriteHTML -Force | Out-Null
-Import-Module -Name PSWriteHTML
-
 # Generate Access Token to use in the connection string to MSGraph
 $MsalToken = Get-MsalToken -TenantId $Tenant_Id -ClientId $Client_Id -ClientSecret ($Client_Secret | ConvertTo-SecureString -AsPlainText -Force)
 
-#Connect to Graph using access token
+# Connect to Graph using access token
 $Credential = ConvertTo-GraphCredential -MsalToken $MsalToken.AccessToken
 
 foreach ($owner in $ownerCostDetails.Keys) {
-    # Create a single HTML table for each owner
-    $subscriptionsHtml = New-HTML -Content {
-        $ownerSubscriptions = $ownerCostDetails[$owner] | Select-Object SubscriptionName, "$previous_month Costs", "$previous_2_months Costs", "Percentage Change"
-        New-HTMLTable -DataTable $ownerSubscriptions -HideFooter
-    } -FilePath $tempFile
-
     # Get the first name of the owner
     $firstName = (Get-AzADUser -Mail $owner).GivenName
+
     # Construct the HTML body for the email
     $htmlbody = @"
     <html>
-        <body>
-            Hello $firstname,<br>
-            Below are your Azure subscription(s) costs for the last two months. <br><br>
-            
-            $subscriptionsHtml
-            
+        <body style="font-family:Arial; font-size:14px;">
+            Hello $firstName,<br><br>
+            Below are your Azure subscription(s) costs for the last two months:<br><br>
+            <table style="border-collapse: collapse; width: 100%;">
+                <tr style="background-color: #f2f2f2;">
+                    <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Subscription Name</th>
+                    <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">$previous_2_months Costs</th>
+                    <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">$previous_month Costs</th>
+                    <th style="border: 1px solid #dddddd; text-align: left; padding: 8px;">Percentage Change</th>
+                </tr>
+"@
+
+    foreach ($sub in $ownerCostDetails[$owner]) {
+        $htmlbody += @"
+                <tr>
+                    <td style="border: 1px solid #dddddd; padding: 8px;">$($sub.SubscriptionName)</td>
+                    <td style="border: 1px solid #dddddd; padding: 8px;">$($sub.("$previous_2_months Costs"))</td>
+                    <td style="border: 1px solid #dddddd; padding: 8px;">$($sub.("$previous_month Costs"))</td>
+                    <td style="border: 1px solid #dddddd; padding: 8px;">$([math]::Round($sub."Percentage Change", 2))%</td>
+                </tr>
+"@
+    }
+
+    $htmlbody += @"
+            </table>
         </body>
     </html>
 "@
-
+    # Send Email with retry logic
     $retryCount = 0
     $retryMax = 5
 
     while ($retryCount -lt $retryMax) {
-        # Send the email
-        $result = Send-EmailMessage -From $from_email_address -To $to_email_address -cc $cc_email_address -Credential $Credential -HTML $htmlbody -Subject "Azure Subscription Costs as of $date" -Graph -DoNotSaveToSentItems -Verbose -ErrorAction SilentlyContinue
+        # Attempt to send the email
+        $result = Send-EmailMessage -From $from_email_address -To $owner -cc $cc_email_address -Credential $Credential -HTML $htmlbody -Subject "Azure Subscription Costs as of $date" -Graph -DoNotSaveToSentItems -Verbose -ErrorAction SilentlyContinue
         if ($result.Status) {
             Write-Host "Email sent successfully."
             break
-        }
-        else {
+        } else {
             $retryCount++
             Write-Host "Failed to send email. Attempt: $retryCount"
-            Start-Sleep -Seconds 5 # You may adjust this sleep time as per your need
+            Start-Sleep -Seconds 5
         }
     }
+
     if ($retryCount -eq $retryMax) {
         Write-Host "Failed to send email after $retryMax attempts."
     }

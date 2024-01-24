@@ -35,8 +35,8 @@ Emails to subscription owners with cost details.
 
 .NOTES
 Version:        1.0
-Author:         [Your Name]
-Creation Date:  [Date]
+Author:         Vyente Ruffin
+Creation Date:  01/24/24
 Purpose/Change: Initial script development
 
 #>

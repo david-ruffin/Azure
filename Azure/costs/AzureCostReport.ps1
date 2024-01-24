@@ -15,6 +15,7 @@ For each subscription, the script:
 The script also includes error handling for email sending with a retry mechanism.
 
 .PREREQUISITES
+- This assumes that each subscription has an 'owner' tag with the email of the owner. If not owner tag exists, it will be ignored.
 - Azure PowerShell Az Module.
 - MSAL.PS, Mailozaurr, and PSWriteHTML PowerShell modules.
 - Azure service principal with appropriate permissions for accessing subscription and cost data.

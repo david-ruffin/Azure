@@ -214,9 +214,6 @@ foreach ($owner in $ownerCostDetails.Keys) {
         New-HTMLTable -DataTable $ownerSubscriptions -HideFooter
     } -FilePath $tempFile
 
-    # Read the HTML content from the temporary file
-    $subscriptionsHtml = Get-Content -Path $tempFile -Raw
-
     # Get the first name of the owner
     $firstName = (Get-AzADUser -Mail $owner).GivenName
     # Construct the HTML body for the email
@@ -237,7 +234,7 @@ foreach ($owner in $ownerCostDetails.Keys) {
 
     while ($retryCount -lt $retryMax) {
         # Send the email
-        $result = Send-EmailMessage -From $from_email_address -To $to_email_address -Credential $Credential -HTML $htmlbody -Subject "Azure Subscription Costs as of $date" -Graph -DoNotSaveToSentItems -Verbose -ErrorAction SilentlyContinue
+        $result = Send-EmailMessage -From $from_email_address -To $to_email_address -cc $cc_email_address -Credential $Credential -HTML $htmlbody -Subject "Azure Subscription Costs as of $date" -Graph -DoNotSaveToSentItems -Verbose -ErrorAction SilentlyContinue
         if ($result.Status) {
             Write-Host "Email sent successfully."
             break

@@ -42,6 +42,14 @@ Purpose/Change: Initial script development
 
 #>
 
+# Declare variables and Authentication
+$client_id = "xxx"
+$client_secret = "xxx"
+$tenant_id = "xxx"
+$from_email_address = "user1@contoso.com"
+$to_email_address = "user2@contoso.com"
+$cc_email_address = @("user3@contoso.com", "user4@contoso.com")
+
 # Install necessary modules and dependencies
 Install-Module MSAL.PS -Scope CurrentUser -Force | Out-Null
 Install-Module Mailozaurr -Force | Out-Null

@@ -115,3 +115,7 @@ $actionResults | Format-Table -Property Repository, Action -AutoSize
 # Optionally, display detailed information about the images considered for deletion
 # Uncomment the line below to view these details
 $deletionDetails | Format-Table -Property Repository, TaggedAs, CreatedOn, DaysOld -AutoSize
+
+# Disconnect from Azure
+Disconnect-AzAccount | Out-Null
+

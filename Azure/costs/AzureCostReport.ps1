@@ -251,11 +251,20 @@ foreach ($owner in $ownerCostDetails.Keys) {
 
     while ($retryCount -lt $retryMax) {
         # Attempt to send the email
-        $result = Send-EmailMessage -From $from_email_address -To $owner -cc $cc_email_address -Credential $Credential -HTML $htmlbody -Subject "Azure Subscription Costs as of $date" -Graph -DoNotSaveToSentItems -Verbose -ErrorAction SilentlyContinue
+        # If NOT in test mode, send the email to the actual subscription owner(s)
+        # Before sending the email, check the $test flag to determine the target and subject
+        if ($test) {
+            # If in test mode, send the email to the $from_email_address to avoid sending it to the actual owners
+            $result = Send-EmailMessage -From $from_email_address -To $from_email_address -Credential $Credential -HTML $htmlbody -Subject "TEST - Azure Subscription Costs as of $date" -Graph -Verbose -ErrorAction SilentlyContinue
+        } else {
+            # If not in test mode, send the email to the actual $owner with CCs as needed
+            $result = Send-EmailMessage -From $from_email_address -To $owner -cc $cc_email_address -Credential $Credential -HTML $htmlbody -Subject "Azure Subscription Costs as of $date" -Graph -Verbose -ErrorAction SilentlyContinue
+        }
         if ($result.Status) {
             Write-Host "Email sent successfully."
             break
-        } else {
+        }
+        else {
             $retryCount++
             Write-Host "Failed to send email. Attempt: $retryCount"
             Start-Sleep -Seconds 5
@@ -266,6 +275,5 @@ foreach ($owner in $ownerCostDetails.Keys) {
         Write-Host "Failed to send email after $retryMax attempts."
     }
 }
-
 # Optional: Disconnect from Azure to clean up the session
 Disconnect-AzAccount -Confirm:$false | Out-Null

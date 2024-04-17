@@ -1,8 +1,3 @@
-GPT
-Certainly! In PowerShell, adding detailed comments at the top of a script helps in understanding the purpose, scope, parameters, expected input, and output of the script. It is also common to include information about the author, date, and any prerequisites needed for the script to function properly. Here’s how you can structure these comments based on PowerShell best practices:
-
-powershell
-Copy code
 <#
 .SYNOPSIS
     Performs file integrity checks between two servers by comparing SHA256 hashes of file samples.

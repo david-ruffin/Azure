@@ -34,9 +34,9 @@
     using the same seed for random file selection and user-provided credentials.
 
 .NOTES
-    Author: [Your Name]
-    Date: [Date Created]
-    Last Modified: [Last Modified Date]
+    Author: Vyente Ruffin
+    Date: 04-17-24
+    Last Modified: 04-17-24
     Version: 1.0
 
     Ensure that both servers have PowerShell remoting enabled and accessible for the user with the provided credentials.
@@ -45,8 +45,8 @@
 #>
 $cred = Get-Credential # Add auth creds
 # Define the servers and multiple directory paths
-$server1 = "ruffin-ansible-win-test.amtwoundcare.com"
-$server2 = "AMTRundeckWin.amtwoundcare.com"
+$server1 = "server1@contoso.com"
+$server2 = "server2@contoso.com"
 $directories = @('c:\crc\autoBid_Project', 'c:\crc\Backorders', 'c:\crc\FEDEX')  # Add array of directories to compare
 $seed = 2024  # Set a consistent seed for random selection
 $exportLocation = "c:\Results.csv" # Location for exported csv

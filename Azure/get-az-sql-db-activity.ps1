@@ -3,7 +3,7 @@
 # This PowerShell script retrieves activity logs for all Azure SQL Databases
 # across all subscriptions for the last 90 days. It filters logs to include 
 # only user actions (indicated by '@' in the Caller field) and outputs the 
-# results to a CSV file.
+# results to a CSV file, listing both database and server names separately.
 # -----------------------------------------------------------------------
 
 # Set the time range to retrieve logs from the last 90 days
@@ -53,6 +53,7 @@ foreach ($subscription in $subscriptions) {
                 $allResults += $userLogs | Select-Object `
                     @{Name="Date";Expression={$_.EventTimestamp.ToString("yyyy-MM-dd")}},
                     @{Name="Time";Expression={$_.EventTimestamp.ToString("HH:mm:ss")}},
+                    @{Name="Server Name";Expression={$serverName}},
                     @{Name="Database Name";Expression={$dbName}},
                     @{Name="Resource Group";Expression={$resourceGroupName}},
                     @{Name="Subscription Name";Expression={$subscriptionName}},
@@ -62,6 +63,7 @@ foreach ($subscription in $subscriptions) {
                 $allResults += [PSCustomObject]@{
                     Date = (Get-Date).ToString("yyyy-MM-dd")
                     Time = (Get-Date).ToString("HH:mm:ss")
+                    "Server Name" = $serverName
                     "Database Name" = $dbName
                     "Resource Group" = $resourceGroupName
                     "Subscription Name" = $subscriptionName

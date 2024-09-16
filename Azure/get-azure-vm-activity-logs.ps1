@@ -8,48 +8,60 @@
 # -----------------------------------------------------------------------
 
 # Set the time range to retrieve logs from the last 90 days
-$startTime = (Get-Date).AddDays(-90)  # This sets the lookback period to 90 days
+$startTime = (Get-Date).AddDays(-90)  # Set to the last 90 days
+$outputFile = "AzureVMActivityLog_$(Get-Date -Format 'yyyyMMdd_HHmmss').csv"
 
-# Get all Azure subscriptions that the current user has access to
-$subscriptions = Get-AzSubscription  # Retrieves the list of subscriptions
+# Get all subscriptions
+$subscriptions = Get-AzSubscription
+
+# Create an empty array to store all results
+$allResults = @()
 
 # Loop through each subscription
 foreach ($subscription in $subscriptions) {
-    $subscriptionId = $subscription.Id  # Store the subscription ID
-    $subscriptionName = $subscription.Name  # Store the subscription name for reporting
+    $subscriptionId = $subscription.Id
+    $subscriptionName = $subscription.Name
     
-    # Set the Azure context to the current subscription (ensures commands target the correct subscription)
+    # Set the context to the current subscription
     Set-AzContext -SubscriptionId $subscriptionId
 
-    # Retrieve all virtual machines (VMs) in the current subscription
-    $vms = Get-AzVM  # Fetches all VMs in the subscription
+    # Get all VMs in the current subscription
+    $vms = Get-AzVM
 
-    # Loop through each VM in the subscription
     foreach ($vm in $vms) {
-        $vmId = $vm.Id  # Get the unique resource ID for the VM
-        $vmName = $vm.Name  # Get the name of the VM
-        $resourceGroupName = $vm.ResourceGroupName  # Get the resource group containing the VM
+        $vmId = $vm.Id
+        $vmName = $vm.Name
+        $resourceGroupName = $vm.ResourceGroupName
 
-        # Retrieve the activity logs for the VM by its Resource ID within the last 90 days
+        # Get activity log for the VM by ResourceId
         $logs = Get-AzActivityLog -ResourceId $vmId -StartTime $startTime
 
-        # Filter the logs to include only those where the Caller is a user (not a system/service account)
-        $userLogs = $logs | Where-Object { $_.Caller -like "*@*" }  # Checks for '@' in the Caller field
+        # Filter for user accounts only (those with '@' in the caller)
+        $userLogs = $logs | Where-Object { $_.Caller -like "*@*" }
 
-        # If user activity logs are found, output them in a readable table format
+        # Add results to the array
         if ($userLogs) {
-            $userLogs | Select-Object `
-                @{Name="Date";Expression={$_.EventTimestamp.ToString("yyyy-MM-dd")}},  # Format the date
-                @{Name="Time";Expression={$_.EventTimestamp.ToString("HH:mm:ss")}},    # Format the time
-                @{Name="Resource Name";Expression={$vmName}},  # Display the VM name
-                @{Name="Resource Group";Expression={$resourceGroupName}},  # Display the resource group name
-                @{Name="Subscription Name";Expression={$subscriptionName}},  # Display the subscription name
-                @{Name="Caller";Expression={$_.Caller}}  # Display the user who performed the action
-            | Format-Table -AutoSize  # Format the output into a table with automatic column sizing
-        } 
-        else {
-            # Output a message if no user activity logs are found for the VM
-            Write-Output "No user activity logs for VM: $vmName in Subscription: $subscriptionName"
+            $allResults += $userLogs | Select-Object `
+                @{Name="Date";Expression={$_.EventTimestamp.ToString("yyyy-MM-dd")}},
+                @{Name="Time";Expression={$_.EventTimestamp.ToString("HH:mm:ss")}},
+                @{Name="Resource Name";Expression={$vmName}},
+                @{Name="Resource Group";Expression={$resourceGroupName}},
+                @{Name="Subscription Name";Expression={$subscriptionName}},
+                @{Name="Caller";Expression={$_.Caller}}
+        } else {
+            $allResults += [PSCustomObject]@{
+                Date = (Get-Date).ToString("yyyy-MM-dd")
+                Time = (Get-Date).ToString("HH:mm:ss")
+                "Resource Name" = $vmName
+                "Resource Group" = $resourceGroupName
+                "Subscription Name" = $subscriptionName
+                Caller = "No user activity logs"
+            }
         }
     }
 }
+
+# Export all results to CSV file
+$allResults | Export-Csv -Path $outputFile -NoTypeInformation
+
+Write-Output "Results have been exported to $outputFile"

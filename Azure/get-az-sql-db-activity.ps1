@@ -3,60 +3,76 @@
 # This PowerShell script retrieves activity logs for all Azure SQL Databases
 # across all subscriptions for the last 90 days. It filters logs to include 
 # only user actions (indicated by '@' in the Caller field) and outputs the 
-# results in a readable table format. If no logs are found for a particular 
-# SQL Database, the script provides feedback.
+# results to a CSV file.
 # -----------------------------------------------------------------------
 
 # Set the time range to retrieve logs from the last 90 days
-$startTime = (Get-Date).AddDays(-90)  # Sets the lookback period to 90 days
+$startTime = (Get-Date).AddDays(-90)
+
+# Create a filename with timestamp for the output CSV
+$outputFile = "AzureSQLActivityLog_$(Get-Date -Format 'yyyyMMdd_HHmmss').csv"
+
+# Create an empty array to store all results
+$allResults = @()
 
 # Get all Azure subscriptions that the current user has access to
-$subscriptions = Get-AzSubscription  # Retrieves all subscriptions for the current user
+$subscriptions = Get-AzSubscription
 
 # Loop through each subscription
 foreach ($subscription in $subscriptions) {
-    $subscriptionId = $subscription.Id  # Store the subscription ID for context switching
-    $subscriptionName = $subscription.Name  # Store the subscription name for output formatting
+    $subscriptionId = $subscription.Id
+    $subscriptionName = $subscription.Name
     
-    # Set the Azure context to the current subscription to ensure correct targeting of resources
+    # Set the Azure context to the current subscription
     Set-AzContext -SubscriptionId $subscriptionId
 
     # Retrieve all SQL Servers in the current subscription
-    $sqlServers = Get-AzSqlServer  # Fetch all SQL Servers in the subscription
+    $sqlServers = Get-AzSqlServer
 
     # Loop through each SQL Server
     foreach ($sqlServer in $sqlServers) {
-        $serverName = $sqlServer.ServerName  # Get the server name
-        $resourceGroupName = $sqlServer.ResourceGroupName  # Get the resource group for the SQL Server
+        $serverName = $sqlServer.ServerName
+        $resourceGroupName = $sqlServer.ResourceGroupName
         
         # Get all SQL Databases in the current SQL Server
-        $sqlDatabases = Get-AzSqlDatabase -ServerName $serverName -ResourceGroupName $resourceGroupName  # Retrieve all SQL databases on the server
+        $sqlDatabases = Get-AzSqlDatabase -ServerName $serverName -ResourceGroupName $resourceGroupName
         
         # Loop through each SQL Database
         foreach ($sqlDatabase in $sqlDatabases) {
-            $dbResourceId = $sqlDatabase.ResourceId  # Get the unique Resource ID for the SQL Database
-            $dbName = $sqlDatabase.DatabaseName  # Store the SQL database name
+            $dbResourceId = $sqlDatabase.ResourceId
+            $dbName = $sqlDatabase.DatabaseName
 
-            # Retrieve the activity logs for the SQL Database by its Resource ID within the last 90 days
+            # Retrieve the activity logs for the SQL Database
             $logs = Get-AzActivityLog -ResourceId $dbResourceId -StartTime $startTime
 
-            # Filter the logs to include only those where the Caller is a user (denoted by '@' in the Caller field)
-            $userLogs = $logs | Where-Object { $_.Caller -like "*@*" }  # Filter user-triggered actions
+            # Filter the logs to include only those where the Caller is a user
+            $userLogs = $logs | Where-Object { $_.Caller -like "*@*" }
 
-            # If user activity logs are found, format them for output
+            # If user activity logs are found, add them to the results
             if ($userLogs) {
-                $userLogs | Select-Object `
-                    @{Name="Date";Expression={$_.EventTimestamp.ToString("yyyy-MM-dd")}},  # Format the date
-                    @{Name="Time";Expression={$_.EventTimestamp.ToString("HH:mm:ss")}},    # Format the time
-                    @{Name="Database Name";Expression={$dbName}},  # Show the SQL Database name
-                    @{Name="Resource Group";Expression={$resourceGroupName}},  # Show the resource group
-                    @{Name="Subscription Name";Expression={$subscriptionName}},  # Show the subscription name
-                    @{Name="Caller";Expression={$_.Caller}}  # Show the user who performed the action
-                | Format-Table -AutoSize  # Format the output into a table with automatic column sizing
+                $allResults += $userLogs | Select-Object `
+                    @{Name="Date";Expression={$_.EventTimestamp.ToString("yyyy-MM-dd")}},
+                    @{Name="Time";Expression={$_.EventTimestamp.ToString("HH:mm:ss")}},
+                    @{Name="Database Name";Expression={$dbName}},
+                    @{Name="Resource Group";Expression={$resourceGroupName}},
+                    @{Name="Subscription Name";Expression={$subscriptionName}},
+                    @{Name="Caller";Expression={$_.Caller}}
             } else {
-                # Output a message if no user activity logs are found for the SQL Database
-                Write-Output "No user activity logs for SQL Database: $dbName in Subscription: $subscriptionName"
+                # Add a record indicating no logs were found
+                $allResults += [PSCustomObject]@{
+                    Date = (Get-Date).ToString("yyyy-MM-dd")
+                    Time = (Get-Date).ToString("HH:mm:ss")
+                    "Database Name" = $dbName
+                    "Resource Group" = $resourceGroupName
+                    "Subscription Name" = $subscriptionName
+                    Caller = "No user activity logs"
+                }
             }
         }
     }
 }
+
+# Export all results to CSV file
+$allResults | Export-Csv -Path $outputFile -NoTypeInformation
+
+Write-Output "Results have been exported to $outputFile"

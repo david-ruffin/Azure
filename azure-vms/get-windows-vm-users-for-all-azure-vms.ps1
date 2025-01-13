@@ -26,10 +26,7 @@ foreach ($sub in Get-AzSubscription) {
                ResourceGroup = $vm.ResourceGroupName
                Subscription = $sub.Name
                Status = $status
-               OSType = "Windows"
                Username = "N/A"
-               UserType = "N/A"
-               Groups = "N/A"
                LastLogin = "N/A"
            }
            continue
@@ -37,34 +34,17 @@ foreach ($sub in Get-AzSubscription) {
 
        $script = @"
            `$users = @()
-           
-           Get-LocalUser | Where-Object Enabled -eq `$true | ForEach-Object {
-               `$user = `$_
-               `$groups = Get-LocalGroup | Where-Object {
-                   (Get-LocalGroupMember `$_.Name).Name -contains `$user.Name
-               } | Select-Object -ExpandProperty Name
-               
+           Get-WinEvent -FilterHashtable @{LogName='Security'; ID=4624} -MaxEvents 50 | 
+           Where-Object {`$_.Properties[8].Value -notlike '*$'} | 
+           Select-Object @{n='Username';e={`$_.Properties[5].Value}}, 
+                        @{n='LoginTime';e={`$_.TimeCreated}} | 
+           Sort-Object LoginTime -Unique |
+           ForEach-Object {
                `$users += @{
-                   Username = `$user.Name
-                   UserType = 'Local'
-                   Groups = (`$groups -join ',')
-                   LastLogin = if(`$user.LastLogon){`$user.LastLogon.ToString('yyyy-MM-dd')}else{'Never'}
+                   Username = `$_.Username
+                   LastLogin = `$_.LoginTime.ToString('yyyy-MM-dd HH:mm')
                }
            }
-           
-           if ((Get-WmiObject Win32_ComputerSystem).PartOfDomain) {
-               Get-ADUser -Filter * -Property LastLogon | Where-Object Enabled -eq `$true | ForEach-Object {
-                   `$groups = Get-ADPrincipalGroupMembership `$_.SamAccountName | Select-Object -ExpandProperty Name
-                   
-                   `$users += @{
-                       Username = `$_.SamAccountName
-                       UserType = 'Domain'
-                       Groups = (`$groups -join ',')
-                       LastLogin = if(`$_.LastLogon){([DateTime]::FromFileTime(`$_.LastLogon)).ToString('yyyy-MM-dd')}else{'Never'}
-                   }
-               }
-           }
-           
            ConvertTo-Json -InputObject `$users -Compress
 "@
 
@@ -80,10 +60,7 @@ foreach ($sub in Get-AzSubscription) {
                    ResourceGroup = $vm.ResourceGroupName
                    Subscription = $sub.Name
                    Status = $status
-                   OSType = "Windows"
                    Username = $user.Username
-                   UserType = $user.UserType
-                   Groups = $user.Groups
                    LastLogin = $user.LastLogin
                }
            }
@@ -94,9 +71,5 @@ foreach ($sub in Get-AzSubscription) {
    }
 }
 
-# Export and display
 $report | Export-Csv "VMUserAccessAudit.csv" -NoTypeInformation
 $report | Format-Table -AutoSize
-
-# Disconnect
-Disconnect-AzAccount

@@ -1,0 +1,37 @@
+// Combined Azure VMs and Arc Machines Inventory
+Resources
+| where type in ('microsoft.compute/virtualmachines', 'microsoft.hybridcompute/machines')
+| extend 
+    VMType = iff(type =~ 'microsoft.compute/virtualmachines', 'Azure VM', 'Arc-enabled'),
+    OSType = iff(type =~ 'microsoft.compute/virtualmachines', 
+        tostring(properties.storageProfile.osDisk.osType), 
+        tostring(properties.osType)),
+    PowerState = iff(type =~ 'microsoft.compute/virtualmachines',
+        tostring(properties.extended.instanceView.powerState.displayStatus),
+        tostring(properties.status.powerState)),
+    nicId = iff(type =~ 'microsoft.compute/virtualmachines',
+        tostring(properties.networkProfile.networkInterfaces[0].id),
+        '')
+| join kind=leftouter (
+    Resources
+    | where type =~ 'microsoft.network/networkinterfaces'
+    | extend privateIP = tostring(properties.ipConfigurations[0].properties.privateIPAddress)
+    | project nicId = id, privateIP
+) on nicId
+| extend IPAddress = iff(type =~ 'microsoft.compute/virtualmachines', 
+    privateIP,
+    tostring(properties.adFqdn))
+| join kind=leftouter (
+    resourcecontainers
+    | where type == "microsoft.resources/subscriptions"
+    | project subscriptionId, SubscriptionName = name
+) on subscriptionId
+| project
+    VMName = name,
+    VMType,
+    OperatingSystem = OSType,
+    IPAddress,
+    PowerState,
+    ResourceGroup = resourceGroup,
+    Subscription = SubscriptionName
+| sort by VMName asc

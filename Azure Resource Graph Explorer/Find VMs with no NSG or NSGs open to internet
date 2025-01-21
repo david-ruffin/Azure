@@ -1,0 +1,49 @@
+// Find VMs with no NSG or NSGs open to internet
+// Find VMs with no NSG or NSGs open to internet
+Resources
+| where type =~ 'microsoft.compute/virtualmachines'
+| extend nicId = tostring(properties.networkProfile.networkInterfaces[0].id)
+| extend Creator = iif(isnotempty(tags.Creator), tostring(tags.Creator), "Not Tagged")
+| extend DateCreated = iif(isnotempty(tags.DateCreated), tostring(tags.DateCreated), "Not Tagged")
+| join kind=leftouter (
+    Resources
+    | where type =~ 'microsoft.network/networkinterfaces'
+    | extend publicIpId = tostring(properties.ipConfigurations[0].properties.publicIPAddress.id)
+    | extend nsgId = tostring(properties.networkSecurityGroup.id)
+    | project nicId = id, publicIpId, nsgId
+) on nicId
+| join kind=leftouter (
+    Resources
+    | where type =~ 'microsoft.network/publicipaddresses'
+    | project publicIpId = id, publicIpAddress = tostring(properties.ipAddress)
+) on publicIpId
+| join kind=leftouter (
+    Resources
+    | where type =~ 'microsoft.network/networksecuritygroups'
+    | mv-expand rules = properties.securityRules
+    | where rules.properties.direction == "Inbound" and rules.properties.access == "Allow"
+    | extend SourceAddressPrefix = tostring(rules.properties.sourceAddressPrefix)
+    | where SourceAddressPrefix in ("*", "0.0.0.0/0", "Internet")
+    | extend Port = tostring(rules.properties.destinationPortRange)
+    | extend RuleName = tostring(rules.name)
+    | project id, RuleName, SourceAddressPrefix, Port
+    | summarize NSGRules = make_list(pack('ruleName', RuleName, 'sourceIP', SourceAddressPrefix, 'port', Port)) by id
+) on $left.nsgId == $right.id
+| where isnotempty(publicIpAddress) and (isempty(nsgId) or isnotempty(NSGRules))
+| join kind=leftouter (
+    resourcecontainers
+    | where type == "microsoft.resources/subscriptions"
+    | project subscriptionId, SubscriptionName = name
+) on subscriptionId
+| project
+    SubscriptionName,
+    VMName = name,
+    ResourceGroup = resourceGroup,
+    Creator,
+    DateCreated,
+    PublicIP = publicIpAddress,
+    SecurityIssue = case(
+        isempty(nsgId), "No NSG Configured",
+        "NSG Open to Internet"
+    ),
+    NSGRules = iif(isempty(NSGRules), "No rules", tostring(NSGRules))

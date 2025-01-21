@@ -1,0 +1,47 @@
+// Get VMs with public IPs and their NSG rules
+// Get VMs with public IPs and their NSG rules
+Resources
+| where type =~ 'microsoft.compute/virtualmachines'
+| extend nicId = tostring(properties.networkProfile.networkInterfaces[0].id)
+| join kind=leftouter (
+    Resources
+    | where type =~ 'microsoft.network/networkinterfaces'
+    | extend publicIpId = tostring(properties.ipConfigurations[0].properties.publicIPAddress.id)
+    | extend nsgId = tostring(properties.networkSecurityGroup.id)
+    | project nicId = id, publicIpId, nsgId
+) on nicId
+| join kind=leftouter (
+    Resources
+    | where type =~ 'microsoft.network/publicipaddresses'
+    | project publicIpId = id, publicIpAddress = tostring(properties.ipAddress)
+) on publicIpId
+| join kind=leftouter (
+    Resources
+    | where type =~ 'microsoft.network/networksecuritygroups'
+    | mv-expand rules = properties.securityRules
+    | where rules.properties.direction == "Inbound" and rules.properties.access == "Allow"
+    | extend SourceAddressPrefix = tostring(rules.properties.sourceAddressPrefix)
+    | extend Port = tostring(rules.properties.destinationPortRange)
+    | extend RuleName = tostring(rules.name)
+    | project id, RuleName, SourceAddressPrefix, Port
+    | summarize NSGRules = make_list(pack('ruleName', RuleName, 'sourceIP', SourceAddressPrefix, 'port', Port)) by id
+) on $left.nsgId == $right.id
+| where isnotempty(publicIpAddress)
+| join kind=leftouter (
+    resourcecontainers
+    | where type == "microsoft.resources/subscriptions"
+    | project subscriptionId, SubscriptionName = name
+) on subscriptionId
+| project
+    SubscriptionName,
+    VMName = name,
+    ResourceGroup = resourceGroup,
+    PublicIP = publicIpAddress,
+    NSGStatus = iif(isempty(nsgId), "No NSG", "Has NSG"),
+    NSGRules = iif(isempty(NSGRules), "No rules", tostring(NSGRules)),
+    Risk = case(
+        isempty(nsgId), "High - No NSG",
+        isnotempty(NSGRules) and NSGRules has "Internet" or NSGRules has "*" or NSGRules has "0.0.0.0/0", "High - Open Internet Access",
+        "Low"
+    )
+| order by ['Risk'] asc

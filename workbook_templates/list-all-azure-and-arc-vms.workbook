@@ -1,0 +1,192 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "1db5ee15-fe52-458b-91d1-7ee39d8c2cd3",
+            "version": "KqlParameterItem/1.0",
+            "name": "Subscription",
+            "type": 6,
+            "isRequired": true,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "query": "where type =~ 'microsoft.operationalinsights/workspaces' | summarize Count = count() by subscriptionId | order by Count desc | extend Row = row_number() | project value = strcat('/subscriptions/', subscriptionId), label = subscriptionId, selected = Row == 1",
+            "crossComponentResources": ["value::all"],
+            "typeSettings": {
+              "additionalResourceOptions": ["value::all"],
+              "showDefault": false
+            },
+            "defaultValue": "value::all",
+            "queryType": 1,
+            "resourceType": "microsoft.resourcegraph/resources"
+          },
+          {
+            "id": "9732eff8-fb57-4cbd-8ade-5ae746f33760",
+            "version": "KqlParameterItem/1.0",
+            "name": "Workspace",
+            "type": 5,
+            "isRequired": true,
+            "multiSelect": false,
+            "quote": "'",
+            "delimiter": ",",
+            "query": "where type =~ 'microsoft.operationalinsights/workspaces' | project id, name | order by name asc",
+            "crossComponentResources": ["{Subscription}"],
+            "typeSettings": {
+              "resourceTypeFilter": {
+                "microsoft.operationalinsights/workspaces": true
+              },
+              "additionalResourceOptions": []
+            },
+            "queryType": 1,
+            "resourceType": "microsoft.resourcegraph/resources"
+          },
+          {
+            "id": "5f8cce4b-9c4c-47da-8683-7e5ccc9faed3",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "type": 4,
+            "typeSettings": {
+              "selectableValues": [
+                { "durationMs": 300000 },
+                { "durationMs": 900000 },
+                { "durationMs": 1800000 },
+                { "durationMs": 3600000 },
+                { "durationMs": 14400000 },
+                { "durationMs": 43200000 },
+                { "durationMs": 86400000 },
+                { "durationMs": 172800000 }
+              ],
+              "allowCustom": true
+            },
+            "value": { "durationMs": 3600000 }
+          }
+        ],
+        "style": "above",
+        "queryType": 1,
+        "resourceType": "microsoft.resourcegraph/resources"
+      },
+      "name": "parameters"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "// Get base VM list\nlet vms = VMComputer\n| where TimeGenerated > ago(1h)\n| extend AzureResourceId = _ResourceId\n| extend VMType = iff(isempty(AzureResourceId) or AzureResourceId startswith \"/subscriptions/\", \"Azure VM\", \"Azure Arc\")\n| distinct Computer, VMType, _ResourceId;\n\n// Get CPU metrics and timeline\nlet cpu = InsightsMetrics\n| where TimeGenerated {TimeRange}\n| where Namespace == \"Processor\" and Name == \"UtilizationPercentage\"\n| summarize CPUAvg = avg(Val) by Computer\n| join kind=leftouter (\n    InsightsMetrics\n    | where TimeGenerated {TimeRange}\n    | where Namespace == \"Processor\" and Name == \"UtilizationPercentage\"\n    | make-series CPUTimeline = avg(Val) default = 0 on TimeGenerated from {TimeRange:start} to {TimeRange:end} step {TimeRange:grain} by Computer\n) on Computer;\n\n// Get Disk metrics\nlet disk = InsightsMetrics\n| where TimeGenerated {TimeRange}\n| where Namespace == \"LogicalDisk\"\n| summarize DiskRead = sumif(Val, Name == \"ReadBytesPerSecond\"),\n            DiskWrite = sumif(Val, Name == \"WriteBytesPerSecond\")\n            by Computer;\n\n// Get Network metrics\nlet network = InsightsMetrics\n| where TimeGenerated {TimeRange}\n| where Namespace == \"Network\"\n| summarize NetworkIn = sumif(Val, Name == \"ReadBytesPerSecond\"),\n            NetworkOut = sumif(Val, Name == \"WriteBytesPerSecond\")\n            by Computer;\n\n// Combine all metrics with left joins to keep all VMs\nvms\n| join kind=leftouter (cpu) on Computer\n| join kind=leftouter (disk) on Computer\n| join kind=leftouter (network) on Computer\n| extend Status = case(isnotnull(CPUAvg), \"All Metrics Present\",\n                      \"Missing Metrics\")\n| project\n    ['VM Name'] = Computer,\n    ['VM Type'] = VMType,\n    ['Status'] = Status,\n    ['Percentage CPU (Average)'] = round(CPUAvg, 1),\n    ['Percentage CPU Timeline'] = CPUTimeline,\n    ['Disk Read Bytes (Sum)'] = DiskRead,\n    ['Disk Write Bytes (Sum)'] = DiskWrite,\n    ['Network In Total (Sum)'] = NetworkIn,\n    ['Network Out Total (Sum)'] = NetworkOut\n| sort by ['Status'] asc, ['Percentage CPU (Average)'] desc nulls last",
+        "size": 0,
+        "showAnalytics": true,
+        "timeContext": {
+          "durationMs": 86400000
+        },
+        "timeContextFromParameter": "TimeRange",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "crossComponentResources": ["{Workspace}"],
+        "visualization": "table",
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "VM Name",
+              "formatter": 13,
+              "formatOptions": {
+                "linkTarget": "Resource",
+                "showIcon": true
+              }
+            },
+            {
+              "columnMatch": "VM Type",
+              "formatter": 1
+            },
+            {
+              "columnMatch": "Status",
+              "formatter": 18,
+              "formatOptions": {
+                "thresholdsOptions": "colors",
+                "thresholdsGrid": [
+                  {
+                    "operator": "==",
+                    "thresholdValue": "All Metrics Present",
+                    "representation": "green"
+                  },
+                  {
+                    "operator": "Default",
+                    "thresholdValue": null,
+                    "representation": "redBright"
+                  }
+                ]
+              }
+            },
+            {
+              "columnMatch": "Percentage CPU \\(Average\\)",
+              "formatter": 8,
+              "formatOptions": {
+                "min": 0,
+                "max": 100,
+                "palette": "blue"
+              },
+              "numberFormat": {
+                "unit": 1,
+                "options": {
+                  "style": "decimal",
+                  "maximumFractionDigits": 1
+                }
+              }
+            },
+            {
+              "columnMatch": "Percentage CPU Timeline",
+              "formatter": 21,
+              "formatOptions": {
+                "min": 0,
+                "max": 100,
+                "palette": "blue"
+              }
+            },
+            {
+              "columnMatch": "Disk.*Bytes.*",
+              "formatter": 8,
+              "formatOptions": {
+                "min": 0,
+                "palette": "yellow"
+              },
+              "numberFormat": {
+                "unit": 2,
+                "options": {
+                  "style": "decimal",
+                  "maximumFractionDigits": 1
+                }
+              }
+            },
+            {
+              "columnMatch": "Network.*Total.*",
+              "formatter": 8,
+              "formatOptions": {
+                "min": 0,
+                "palette": "orange"
+              },
+              "numberFormat": {
+                "unit": 2,
+                "options": {
+                  "style": "decimal",
+                  "maximumFractionDigits": 1
+                }
+              }
+            }
+          ],
+          "filter": true,
+          "sortBy": [
+            {
+              "itemKey": "Status",
+              "sortOrder": 1
+            }
+          ]
+        }
+      },
+      "name": "vm-metrics-grid"
+    }
+  ],
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}

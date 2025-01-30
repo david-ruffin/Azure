@@ -45,7 +45,35 @@ VMComputer
 | distinct Computer, _ResourceId
 
 
-resources
-| where type == "microsoft.compute/virtualmachines" or type == "microsoft.hybridcompute/machines"
-| project VMName = name, VMId = id, Subscription = subscriptionId
+// Simplified version without let statements
+VMComputer
+| where TimeGenerated > ago(24h)
+| distinct Computer, _ResourceId
+| join kind=leftouter (
+    Heartbeat
+    | where TimeGenerated > ago(24h)
+    | summarize LastHeartbeat = max(TimeGenerated) by Computer
+) on Computer
+| join kind=leftouter (
+    InsightsMetrics
+    | where TimeGenerated > ago(24h)
+    | where Namespace in ("Processor", "LogicalDisk", "Network")
+    | summarize LastMetric = max(TimeGenerated) by Computer
+) on Computer
+| project 
+    Computer,
+    ['Is Discovered in VMComputer'] = "Yes",
+    ['Last Heartbeat'] = LastHeartbeat,
+    ['Last Metric'] = LastMetric,
+    ['Heartbeat-to-Metric Lag'] = case(
+        isnotempty(LastHeartbeat) and isnotempty(LastMetric), tostring(LastHeartbeat - LastMetric),
+        isnotempty(LastHeartbeat), "No Metrics",
+        "Agent Offline"
+    ),
+    ['Status'] = case(
+        isnotempty(LastMetric), "Data Flowing",
+        isnotempty(LastHeartbeat), "Agent Connected (No Metrics)",
+        "Agent Offline/Not Reporting"
+    )
+| sort by ['Status'] asc
 

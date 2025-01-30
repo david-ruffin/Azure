@@ -43,3 +43,9 @@ InsightsMetrics
 VMComputer
 | where TimeGenerated > ago(1h)
 | distinct Computer, _ResourceId
+
+
+resources
+| where type == "microsoft.compute/virtualmachines" or type == "microsoft.hybridcompute/machines"
+| project VMName = name, VMId = id, Subscription = subscriptionId
+

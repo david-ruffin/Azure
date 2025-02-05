@@ -14,3 +14,33 @@ $users | Select-Object `
     @{Name="AccountStatus"; Expression = { if ($_.accountEnabled) { "Enabled" } else { "Disabled" } } }, `
     @{Name="LastLoginDate"; Expression = { $_.signInActivity?.LastSignInDateTime } } | 
     Format-Table -AutoSize
+
+
+
+##### Provide a CSV ####
+# Import the CSV file; make sure it has a column named "UserPrincipalName".
+$usersFromCsv = Import-Csv -Path "no-mfa-short.csv"
+
+# Process each user and collect results.
+$results = foreach ($user in $usersFromCsv) {
+    $upn = $user.UserPrincipalName
+    Write-Host "Processing UPN: $upn"
+    
+    # Retrieve the user using a filter on userPrincipalName.
+    $graphUser = Get-MgUser -Filter "userPrincipalName eq '$upn'" -Property "displayName,userPrincipalName,signInActivity,accountEnabled" | Select-Object -First 1
+
+    if ($graphUser) {
+        [PSCustomObject]@{
+            DisplayName       = $graphUser.displayName
+            UserPrincipalName = $graphUser.userPrincipalName
+            AccountStatus     = if ($graphUser.accountEnabled) { "Enabled" } else { "Disabled" }
+            LastSignInDate    = $graphUser.signInActivity?.LastSignInDateTime
+        }
+    }
+    else {
+        Write-Warning "User not found: $upn"
+    }
+}
+
+# Display the collected results in a formatted table.
+$results | Format-Table -AutoSize

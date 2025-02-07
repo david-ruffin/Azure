@@ -2,7 +2,7 @@
 Import-Module ActiveDirectory
 
 # Define the user to search for
-$userToSearch = "vruffin@ocvibe.com"
+$userToSearch = "user@contoso.com"
 
 # Define the child domains
 $childDomains = @("arena.hsventures.org", "skate.hsventures.org", "home.hsventures.org", "corp.hsventures.org")

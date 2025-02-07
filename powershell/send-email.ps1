@@ -38,18 +38,14 @@ $htmlbody = @"
                 Sincerely,</br></br>
 
                 IT Helpdesk</br>
-                <b>Email:</b> helpdesk@amtwoundcare.com</br>
-                <b>Phone:</b> 949-743-2515</br>
+                <b>Email:</b> helpdesk@contoso.com</br>
+                <b>Phone:</b> 949-213-2515</br>
                 <b>Hours:</b> M-F, 6:30am-4:30pm PST</br>
             </body>
         </html>
 "@
 
-#Send-MailMessage -from $helpdeskEmail -To $amtEmail -CC hdt@amtwoundcare.com, $managerEmail -Subject "Welcome to AMT" -BodyAsHtml "$htmlbody" -SmtpServer amtsmtpr01.amtwoundcare.com -Port 25
-#Send-MailMessage -from $helpdeskEmail -To alex.noble@amtwoundcare.com -CC jaren.thorsen@amtwoundcare.com, david.ruffin@amtwoundcare.com, Tony.Nguyen@amtwoundcare.com -Subject "Welcome to AMT" -BodyAsHtml "$htmlbody" -SmtpServer amtsmtpr01.amtwoundcare.com -Port 25
-#Send-MailMessage -from $helpdeskEmail -To david.ruffin@amtwoundcare.com -CC alex.noble@amtwoundcare.com, jaren.thorsen@amtwoundcare.com, david.ruffin@amtwoundcare.com, Tony.Nguyen@amtwoundcare.com -Subject "Welcome to AMT" -BodyAsHtml "$htmlbody" -SmtpServer amtsmtpr01.amtwoundcare.com -Port 25
 Send-MailMessage -from $helpdeskEmail -To david.ruffin@amtwoundcare.com -Subject "Welcome to AMT" -BodyAsHtml "$htmlbody" -SmtpServer amtsmtpr01.amtwoundcare.com -Port 25
-
 
 Write-Host "Email successfully sent."
 

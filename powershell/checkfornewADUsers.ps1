@@ -6,8 +6,8 @@
 # Declare variables
 
 $file = '/var/lib/rundeck/ad-users.json'
-$ADSearchBase = 'OU=Employees,DC=AMTWOUNDCARE,DC=com'
-$DCServerName = 'amtdc5.amtwoundcare.com'
+$ADSearchBase = 'OU=Employees,DC=CONTOSO,DC=com'
+$DCServerName = 'amtdc5.contoso.com'
 
 # Declare variables
 $file = 'c:\users.json'

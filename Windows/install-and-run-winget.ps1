@@ -3,12 +3,11 @@
 
 # --- Ensure NuGet Provider is Installed Non-Interactively ---
 try {
-    # Try to retrieve the NuGet provider from the installed package providers.
-    # This forces an error if NuGet isn't already installed.
+    # Attempt to retrieve the NuGet provider; this will error if it's not installed.
     $nuget = Get-PackageProvider -Name NuGet -ListAvailable -ErrorAction Stop
 } catch {
     Write-Output "NuGet provider not found. Installing..."
-    # Install the NuGet package provider with the minimum required version non-interactively.
+    # Install the NuGet provider with the required minimum version non-interactively.
     Install-PackageProvider -Name NuGet -MinimumVersion '2.8.5.201' -Force -Scope CurrentUser
     # Import the provider so it's available in the current session.
     Import-PackageProvider -Name NuGet -MinimumVersion '2.8.5.201' -Force
@@ -16,11 +15,11 @@ try {
 
 # --- Set PSGallery Repository as Trusted ---
 try {
-    # This sets the PowerShell Gallery repository to a trusted state, which avoids interactive prompts.
+    # Set the PowerShell Gallery repository to Trusted to avoid interactive prompts.
     Set-PSRepository -Name PSGallery -InstallationPolicy Trusted -ErrorAction Stop
 } catch {
     Write-Output "Unable to set PSGallery trust. Registering PSGallery repository manually..."
-    # If the repository doesn't exist or cannot be modified, register it manually.
+    # Register PSGallery manually if the repository cannot be set.
     Register-PSRepository -Name PSGallery -SourceLocation "https://www.powershellgallery.com/api/v2" -InstallationPolicy Trusted
 }
 
@@ -29,11 +28,11 @@ if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
     Write-Output "winget not found. Installing winget-install script..."
     # Install the winget-install script non-interactively from PSGallery.
     Install-Script -Name winget-install -Force -Scope CurrentUser
-    
-    # Retrieve the command information for the installed winget-install script.
+
+    # Retrieve the full command information for the installed winget-install script.
     $scriptCommand = Get-Command winget-install -ErrorAction SilentlyContinue
     if ($scriptCommand) {
-        # Execute the winget-install script using its full path.
+        # Execute the winget-install script using its full path to install winget.
         & $scriptCommand.Source
     } else {
         Write-Error "winget-install script not found after installation."
@@ -43,6 +42,11 @@ if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
     Write-Output "winget is already installed."
 }
 
+# --- Refresh the PATH Variable ---
+# This line updates the current session's PATH environment variable,
+# ensuring that newly installed executables (like winget) are immediately available.
+$env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" + [System.Environment]::GetEnvironmentVariable("PATH", "User")
+
 # --- Run winget Upgrade Command ---
-# This command upgrades all installed packages using winget non-interactively.
+# Upgrade all installed packages non-interactively.
 winget upgrade --all --silent --accept-source-agreements --accept-package-agreements

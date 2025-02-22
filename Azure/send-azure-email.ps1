@@ -14,7 +14,6 @@ Install-Module PSWriteHTML -Force | Out-Null
 # Generate Access Token to use in the connection string to MSGraph
 $MsalToken = Get-MsalToken -TenantId $TenantId -ClientId $ClientId -ClientSecret ($ClientSecret | ConvertTo-SecureString -AsPlainText -Force)
 
-
 $firstName = "David"
 $name = "david.james"
 #Connect to Graph using access token

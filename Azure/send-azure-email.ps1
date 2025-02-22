@@ -3,6 +3,9 @@ $TenantId = "wwefwef"
 $ClientId = "wefwef"
 $ClientSecret = "wef" 
 $email = "david@contoso.com"
+$fromEmail = "david@contoso.com"
+$cc = "david@contoso.com"
+$subject = "Test Subject"
           
 Install-Module MSAL.PS -Scope CurrentUser -Force | Out-Null
 Install-Module Mailozaurr -Force | Out-Null
@@ -54,4 +57,4 @@ $htmlbody = @"
 </html>
 "@
 # Send Email
-Send-EmailMessage -From 'helpdesk@contoso.com' -To $email -Cc 'david@contoso.com' -Credential $Credential -HTML $htmlbody  -Subject "Your Workspace Instructions" -Graph -DoNotSaveToSentItems  
+Send-EmailMessage -From $fromemail -To $email -Cc $cc -Credential $Credential -HTML $htmlbody  -Subject $subject -Graph -DoNotSaveToSentItems  

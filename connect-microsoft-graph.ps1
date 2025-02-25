@@ -13,7 +13,7 @@ Install-Module Microsoft.Graph -Scope AllUsers
 $cert = Get-ChildItem Cert:\LocalMachine\My\09F46C88544572B824467423A14BB3E8948462AC
 
 # Connect to the MS Graph using the client id, tenant id and the certificate
-Connect-MgGraph -ClientID f0cc343a-ac2e-43b2-93be-63376e9e7629 -TenantId 79f812cc-f0c6-4ac1-bc6d-e8120d4cc6cd -Certificate $cert
+Connect-MgGraph -ClientID "" -TenantId "" -Certificate $cert
 
 # Execute Graph Cmdlets as needed
 Get-MgUser 

@@ -7,9 +7,21 @@ $fromEmail = "david@contoso.com"
 $cc = "david@contoso.com"
 $subject = "Test Subject"
           
-Install-Module MSAL.PS -Scope CurrentUser -Force | Out-Null
-Install-Module Mailozaurr -Force | Out-Null
-Install-Module PSWriteHTML -Force | Out-Null
+#Dependencies
+$requiredModules = @("MSAL.PS", "Mailozaurr", "PSWriteHTML")
+
+foreach ($module in $requiredModules) {
+    if (-not (Get-Module -ListAvailable -Name $module)) {
+        Write-Output "Installing required module: $module"
+        if ($module -eq "MSAL.PS") {
+            Install-Module $module -Scope CurrentUser -Force
+        } else {
+            Install-Module $module -Force
+        }
+    } else {
+        Write-Output "Module $module is already installed"
+    }
+}
 
 # Generate Access Token to use in the connection string to MSGraph
 $MsalToken = Get-MsalToken -TenantId $TenantId -ClientId $ClientId -ClientSecret ($ClientSecret | ConvertTo-SecureString -AsPlainText -Force)

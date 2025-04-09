@@ -1,6 +1,7 @@
 $arcVMName = ""
 $location = "westus"
 $resourceGroupName = ""
+$commandName = ""
 
 # Initiate a mars backup on arc enabled server
 $script = @"
@@ -8,4 +9,4 @@ Import-Module -Name 'C:\Program Files\Microsoft Azure Recovery Services Agent\bi
 Get-OBPolicy | Start-OBBackup
 "@
 
-New-AzConnectedMachineRunCommand -ResourceGroupName $resourceGroupName -Location $location -SourceScript $script -RunCommandName $patchName -MachineName $arcVMName
+New-AzConnectedMachineRunCommand -ResourceGroupName $resourceGroupName -Location $location -SourceScript $script -RunCommandName $commandName -MachineName $arcVMName

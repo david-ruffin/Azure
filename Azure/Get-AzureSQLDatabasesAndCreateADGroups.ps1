@@ -8,7 +8,7 @@
     2. Creates two Azure AD security groups per database for access management:
        - Database-GroupName:<DatabaseName>role:Reader (for db_datareader role)
        - Database-GroupName:<DatabaseName>role:Writer (for db_datawriter role)
-    The database list is exported to a CSV file (AzureSQLDatabases.csv) and displayed in the console. Groups are only created if they don’t already exist.
+    The database list is exported to a CSV file (AzureSQLDatabases.csv) and displayed in the console. Groups are only created if they don't already exist.
 
 .AUTHOR
     [Your Name]
@@ -80,8 +80,8 @@ foreach ($db in $databases) {
     $dbName = $db.DatabaseName
 
     # Define group names
-    $readerGroupName = "Database-GroupName:$dbName`role:Reader"
-    $writerGroupName = "Database-GroupName:$dbName`role:Writer"
+    $readerGroupName = "Database-GroupName:${dbName}role:Reader"
+    $writerGroupName = "Database-GroupName:${dbName}role:Writer"
 
     # Create Reader group if it doesn't exist
     if (-not (Get-MgGroup -Filter "displayName eq '$readerGroupName'")) {
